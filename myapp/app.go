@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/bm4cs/example/numbers"
-	"github.com/bm4cs/example/strings"
-	"github.com/bm4cs/example/strings/greeting" // nested package
+	"github.com/bm4cs/gotime/numbers"
+	"github.com/bm4cs/gotime/strings"
+	"github.com/bm4cs/gotime/strings/greeting" // nested package
 	"log"
 	"net/http"
 	"os"
