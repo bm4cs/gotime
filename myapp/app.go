@@ -2,16 +2,20 @@ package main
 
 import (
 	"fmt"
-	"github.com/bm4cs/gotime/numbers"
-	"github.com/bm4cs/gotime/strings"
-	"github.com/bm4cs/gotime/strings/greeting" // nested package
+	"html/template"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
-	str "strings" // package alias
-)
+	str "strings"
 
-import "html/template"
+	"github.com/bm4cs/gotime/numbers"
+	"github.com/bm4cs/gotime/strings"
+	"github.com/bm4cs/gotime/strings/greeting"
+	"github.com/bm4cs/gotime/viewmodel"
+	// nested package
+	// package alias
+)
 
 func main() {
 
@@ -24,12 +28,16 @@ func main() {
 
 	// bindTemplate()
 
-	templates := populateTemplates()
+	templates := populateTemplatesWithLayout()
+
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		requestedFile := r.URL.Path[1:]
-		t := templates.Lookup(requestedFile + ".htm")
+		//t := templates.Lookup(requestedFile + ".htm")
+		t := templates[requestedFile+".htm"]
+		context := viewmodel.NewBase()
+
 		if t != nil {
-			err := t.Execute(w, nil)
+			err := t.Execute(w, context)
 			if err != nil {
 				log.Println(err)
 			}
@@ -43,12 +51,46 @@ func main() {
 	http.ListenAndServe(":1337", nil)
 }
 
-type fooHandler struct {
-	greeting string
-}
+func populateTemplatesWithLayout() map[string]*template.Template {
+	result := make(map[string]*template.Template)
+	const basePath = "web/templates"
+	layout := template.Must(template.ParseFiles(basePath + "/_layout.htm"))
+	template.Must(layout.ParseFiles(basePath + "/_header.htm"))
 
-func (h *fooHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte(fmt.Sprintf("%v world", h.greeting)))
+	dir, err := os.Open(basePath + "/content")
+	if err != nil {
+		panic("Can't open content templates dir" + err.Error())
+	}
+
+	fis, err := dir.Readdir(-1)
+	if err != nil {
+		panic("Can't read files within content templates dir" + err.Error())
+	}
+
+	for _, fi := range fis {
+		f, err := os.Open(basePath + "/content/" + fi.Name())
+		if err != nil {
+			panic("Can't open template file '" + fi.Name() + "'")
+		}
+
+		content, err := ioutil.ReadAll(f)
+		if err != nil {
+			panic("Couldn't read bytes out of file '" + fi.Name() + "'")
+		}
+
+		f.Close()
+
+		// create the template, and store in map
+		tmpl := template.Must(layout.Clone())
+		_, err = tmpl.Parse(string(content))
+		if err != nil {
+			panic("Couldn't parse content template '" + fi.Name() + "'")
+		}
+
+		result[fi.Name()] = tmpl
+	}
+
+	return result
 }
 
 func populateTemplates() *template.Template {
