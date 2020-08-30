@@ -30,7 +30,7 @@ func stockPriceBruteForce(stocks []int) int {
 }
 
 // improve the brute force, by achieving O(n) time and O(1) space
-func stockPriceFast(stocks []int) int {
+func stockPriceGreedy(stocks []int) int {
 	var max_prof int = -100
 	var min_price int = stocks[0]
 
@@ -73,6 +73,6 @@ func StockPrice() {
 	stocks := []int{10, 7, 5, 8, 11, 9} //6
 	//stocks := []int{10, 7, 5, 3, 1} //-2
 	//max_profit := stockPriceBruteForce(stocks)
-	max_profit := stockPriceFast(stocks)
+	max_profit := stockPriceGreedy(stocks)
 	fmt.Println(max_profit)
 }
